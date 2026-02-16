@@ -52,12 +52,16 @@ const categoryInfo: Record<string, { name: string; icon: string; description: st
 }
 
 async function getCategoryNews(category: string) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news?category=${category}`,
-    { next: { revalidate: 1800 } }
-  )
-  if (!res.ok) return { articles: [] }
-  return res.json()
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news?category=${category}`,
+      { cache: 'no-store' }
+    )
+    if (!res.ok) return { articles: [] }
+    return res.json()
+  } catch (error) {
+    return { articles: [] }
+  }
 }
 
 export async function generateStaticParams() {
@@ -66,8 +70,12 @@ export async function generateStaticParams() {
   }))
 }
 
-export default async function CategoryPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
+export default async function CategoryPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}) {
+  const { slug } = await params
   const category = categoryInfo[slug]
   
   if (!category) {
@@ -77,6 +85,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
         <div className="min-h-screen pt-32 px-4">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">Category Not Found</h1>
+            <p className="text-white/60 mb-4">Looking for: {slug}</p>
             <Link href="/" className="text-blue-400 hover:text-blue-300">
               ← Back to Home
             </Link>
@@ -93,7 +102,6 @@ export default async function CategoryPage({ params }: { params: { slug: string 
       <Navbar />
       <main className="pt-24 pb-20 px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <Link 
             href="/" 
             className="inline-flex items-center space-x-2 text-white/60 hover:text-white transition mb-8"
@@ -112,17 +120,19 @@ export default async function CategoryPage({ params }: { params: { slug: string 
             </div>
           </div>
 
-          {/* Articles */}
-          {articles.length > 0 ? (
+          {articles && articles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {articles.map((article: any) => (
                 <NewsCard key={article.id} article={article} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
+            <div className="text-center py-20 glass rounded-2xl p-12">
               <p className="text-white/60 text-lg mb-4">
-                No articles found in this category yet.
+                No AI articles found in this category yet.
+              </p>
+              <p className="text-white/40 text-sm mb-6">
+                Articles are automatically categorized as they come in.
               </p>
               <Link href="/" className="text-blue-400 hover:text-blue-300">
                 Explore other categories →
