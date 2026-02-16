@@ -33,7 +33,7 @@ export default async function Home() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              AI News, <span className="gradient-text">Decoded</span>
+              AI Verse, <span className="gradient-text">Decoded</span>
             </h1>
 
             <p className="text-xl text-white/60 mb-12 max-w-3xl mx-auto">
