@@ -12,13 +12,15 @@ interface Article {
 const categorizeArticle = (title: string, description: string): string => {
   const text = `${title} ${description}`.toLowerCase()
 
-  if (/finance|banking|fintech|payment/.test(text)) return 'finance'
-  if (/education|learning|student|course/.test(text)) return 'education'
-  if (/startup|funding|venture|founder/.test(text)) return 'startups'
-  if (/tool|product|launch|chatgpt|claude/.test(text)) return 'tools'
-  if (/regulation|policy|law|governance/.test(text)) return 'policy'
-  if (/content|media|creative|video|image/.test(text)) return 'media'
-  if (/business|enterprise|company/.test(text)) return 'business'
+  if (/finance|banking|fintech|payment|trading|investment|crypto/.test(text)) return 'finance'
+  if (/education|learning|student|course|university|teaching/.test(text)) return 'education'
+  if (/startup|funding|venture|founder|seed|series/.test(text)) return 'startups'
+  if (/tool|product|launch|chatgpt|claude|app|platform/.test(text)) return 'tools'
+  if (/regulation|policy|law|governance|ethics|legislation/.test(text)) return 'policy'
+  if (/content|media|creative|video|image|art|music/.test(text)) return 'media'
+  if (/business|enterprise|company|corporate/.test(text)) return 'business'
+  if (/medical|healthcare|health|diagnosis|drug|patient|hospital|doctor/.test(text)) return 'medical'
+  if (/environment|climate|agriculture|farming|sustainability|green|carbon/.test(text)) return 'environment'
 
   return 'general'
 }
