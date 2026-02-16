@@ -9,18 +9,69 @@ interface Article {
   publishedAt: string
 }
 
+const isAIRelated = (title: string, description: string): boolean => {
+  const text = `${title} ${description}`.toLowerCase()
+  
+  // Must contain AI-related keywords
+  const aiKeywords = [
+    'ai', 'artificial intelligence', 'machine learning', 'ml',
+    'deep learning', 'neural network', 'chatgpt', 'gpt', 'claude',
+    'openai', 'anthropic', 'llm', 'large language model',
+    'generative ai', 'gen ai', 'algorithm', 'automation',
+    'computer vision', 'nlp', 'natural language', 'robotics',
+    'autonomous', 'intelligent system', 'data science'
+  ]
+  
+  return aiKeywords.some(keyword => text.includes(keyword))
+}
+
 const categorizeArticle = (title: string, description: string): string => {
   const text = `${title} ${description}`.toLowerCase()
 
-  if (/finance|banking|fintech|payment|trading|investment|crypto/.test(text)) return 'finance'
-  if (/education|learning|student|course|university|teaching/.test(text)) return 'education'
-  if (/startup|funding|venture|founder|seed|series/.test(text)) return 'startups'
-  if (/tool|product|launch|chatgpt|claude|app|platform/.test(text)) return 'tools'
-  if (/regulation|policy|law|governance|ethics|legislation/.test(text)) return 'policy'
-  if (/content|media|creative|video|image|art|music/.test(text)) return 'media'
-  if (/business|enterprise|company|corporate/.test(text)) return 'business'
-  if (/medical|healthcare|health|diagnosis|drug|patient|hospital|doctor/.test(text)) return 'medical'
-  if (/environment|climate|agriculture|farming|sustainability|green|carbon/.test(text)) return 'environment'
+  // Financial AI
+  if (/ai.*(finance|banking|fintech|payment|trading|investment|crypto)|finance.*ai|fintech.*ai/.test(text)) {
+    return 'finance'
+  }
+  
+  // Education AI
+  if (/ai.*(education|learning|student|course|university|teaching)|education.*ai|edtech.*ai/.test(text)) {
+    return 'education'
+  }
+  
+  // Startup AI (funding, ventures)
+  if (/startup|funding|venture|founder|seed round|series [a-z]|raised.*million|investment/.test(text)) {
+    return 'startups'
+  }
+  
+  // AI Tools & Products (ChatGPT, Claude, new AI tools)
+  if (/chatgpt|claude|gemini|copilot|midjourney|dall-e|stable diffusion|ai tool|ai product|ai platform|ai app|gpt-|released|launch.*ai/.test(text)) {
+    return 'tools'
+  }
+  
+  // Policy & Regulation
+  if (/regulation|policy|law|governance|ethics|legislation|government.*ai|ai.*act|ai safety/.test(text)) {
+    return 'policy'
+  }
+  
+  // Medical & Healthcare AI
+  if (/ai.*(medical|healthcare|health|diagnosis|drug|patient|hospital|doctor)|medical.*ai|health.*ai/.test(text)) {
+    return 'medical'
+  }
+  
+  // Environment & Agriculture AI
+  if (/ai.*(environment|climate|agriculture|farming|sustainability|green energy|carbon)|climate.*ai|agriculture.*ai/.test(text)) {
+    return 'environment'
+  }
+  
+  // Media & Creative AI
+  if (/ai.*(content|media|creative|video|image|art|music|generate)|content.*ai|creative.*ai/.test(text)) {
+    return 'media'
+  }
+  
+  // Business AI
+  if (/ai.*(business|enterprise|company|corporate)|business.*ai|enterprise.*ai/.test(text)) {
+    return 'business'
+  }
 
   return 'general'
 }
@@ -28,12 +79,12 @@ const categorizeArticle = (title: string, description: string): string => {
 export async function fetchNews(): Promise<Article[]> {
   const allArticles: Article[] = []
 
-  // Fetch from NewsAPI if key is available
+  // Fetch from NewsAPI
   const newsApiKey = process.env.NEWSAPI_KEY
   if (newsApiKey) {
     try {
       const response = await fetch(
-        `https://newsapi.org/v2/everything?q=artificial+intelligence&language=en&sortBy=publishedAt&pageSize=50&apiKey=${newsApiKey}`,
+        `https://newsapi.org/v2/everything?q=(artificial+intelligence+OR+AI+OR+machine+learning+OR+ChatGPT+OR+OpenAI+OR+LLM)&language=en&sortBy=publishedAt&pageSize=100&apiKey=${newsApiKey}`,
         { next: { revalidate: 1800 } }
       )
 
@@ -41,17 +92,25 @@ export async function fetchNews(): Promise<Article[]> {
         const data = await response.json()
         
         if (data.articles) {
-          const newsApiArticles = data.articles.map((item: any) => ({
-            id: item.url,
-            title: item.title || 'No Title',
-            description: item.description || 'No description available.',
-            url: item.url,
-            image: item.urlToImage || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
-            source: item.source?.name || 'NewsAPI',
-            category: categorizeArticle(item.title || '', item.description || ''),
-            publishedAt: item.publishedAt || new Date().toISOString()
-          }))
-          allArticles.push(...newsApiArticles)
+          const filteredArticles = data.articles
+            .filter((item: any) => {
+              // Filter out non-AI news
+              const title = item.title || ''
+              const description = item.description || ''
+              return isAIRelated(title, description)
+            })
+            .map((item: any) => ({
+              id: item.url,
+              title: item.title || 'No Title',
+              description: item.description || 'No description available.',
+              url: item.url,
+              image: item.urlToImage || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
+              source: item.source?.name || 'NewsAPI',
+              category: categorizeArticle(item.title || '', item.description || ''),
+              publishedAt: item.publishedAt || new Date().toISOString()
+            }))
+          
+          allArticles.push(...filteredArticles)
         }
       }
     } catch (error) {
@@ -59,12 +118,12 @@ export async function fetchNews(): Promise<Article[]> {
     }
   }
 
-  // Fetch from The Guardian if key is available
+  // Fetch from The Guardian
   const guardianKey = process.env.GUARDIAN_API_KEY
   if (guardianKey) {
     try {
       const response = await fetch(
-        `https://content.guardianapis.com/search?q=artificial+intelligence&show-fields=thumbnail,trailText&page-size=30&api-key=${guardianKey}`,
+        `https://content.guardianapis.com/search?q=artificial+intelligence+OR+AI+OR+machine+learning&show-fields=thumbnail,trailText&page-size=50&api-key=${guardianKey}`,
         { next: { revalidate: 1800 } }
       )
 
@@ -72,17 +131,24 @@ export async function fetchNews(): Promise<Article[]> {
         const data = await response.json()
         
         if (data.response?.results) {
-          const guardianArticles = data.response.results.map((item: any) => ({
-            id: item.id,
-            title: item.webTitle || 'No Title',
-            description: item.fields?.trailText || 'Read more on The Guardian',
-            url: item.webUrl,
-            image: item.fields?.thumbnail || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
-            source: 'The Guardian',
-            category: categorizeArticle(item.webTitle || '', item.fields?.trailText || ''),
-            publishedAt: item.webPublicationDate || new Date().toISOString()
-          }))
-          allArticles.push(...guardianArticles)
+          const filteredArticles = data.response.results
+            .filter((item: any) => {
+              const title = item.webTitle || ''
+              const description = item.fields?.trailText || ''
+              return isAIRelated(title, description)
+            })
+            .map((item: any) => ({
+              id: item.id,
+              title: item.webTitle || 'No Title',
+              description: item.fields?.trailText || 'Read more on The Guardian',
+              url: item.webUrl,
+              image: item.fields?.thumbnail || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
+              source: 'The Guardian',
+              category: categorizeArticle(item.webTitle || '', item.fields?.trailText || ''),
+              publishedAt: item.webPublicationDate || new Date().toISOString()
+            }))
+          
+          allArticles.push(...filteredArticles)
         }
       }
     } catch (error) {
@@ -90,13 +156,12 @@ export async function fetchNews(): Promise<Article[]> {
     }
   }
 
-  // If no articles from APIs, return fallback
   if (allArticles.length === 0) {
     return [
       {
         id: '1',
-        title: 'No API keys configured - Add NewsAPI or Guardian API keys',
-        description: 'Please add NEWSAPI_KEY or GUARDIAN_API_KEY to your .env.local file to fetch real news.',
+        title: 'Add API Keys to See Real AI News',
+        description: 'Configure NEWSAPI_KEY or GUARDIAN_API_KEY in .env.local to fetch real-time AI news.',
         url: 'https://newsapi.org',
         image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
         source: 'System',
@@ -106,7 +171,7 @@ export async function fetchNews(): Promise<Article[]> {
     ]
   }
 
-  // Remove duplicates and sort by date
+  // Remove duplicates
   const uniqueArticles = allArticles.filter((article, index, self) =>
     index === self.findIndex((a) => a.title === article.title)
   )
