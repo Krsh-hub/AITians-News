@@ -2,6 +2,7 @@ import Navbar from '@/components/Navbar'
 import NewsCard from '@/components/NewsCard'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { fetchNews, getByCategory } from '@/lib/news'
 
 const categoryInfo: Record<string, { name: string; icon: string; description: string }> = {
   finance: {
@@ -51,24 +52,9 @@ const categoryInfo: Record<string, { name: string; icon: string; description: st
   }
 }
 
-async function getCategoryNews(category: string) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news?category=${category}`,
-      { cache: 'no-store' }
-    )
-    if (!res.ok) return { articles: [] }
-    return res.json()
-  } catch (error) {
-    return { articles: [] }
-  }
-}
-
-export async function generateStaticParams() {
-  return Object.keys(categoryInfo).map((slug) => ({
-    slug,
-  }))
-}
+// Mark as dynamic to avoid build-time fetching
+export const dynamic = 'force-dynamic'
+export const revalidate = 1800
 
 export default async function CategoryPage({ 
   params 
@@ -95,7 +81,9 @@ export default async function CategoryPage({
     )
   }
 
-  const { articles } = await getCategoryNews(slug)
+  // Fetch directly from lib instead of API
+  const allArticles = await fetchNews()
+  const articles = getByCategory(allArticles, slug)
 
   return (
     <>
