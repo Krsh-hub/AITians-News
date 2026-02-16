@@ -12,7 +12,6 @@ interface Article {
 const isAIRelated = (title: string, description: string): boolean => {
   const text = `${title} ${description}`.toLowerCase()
   
-  // Must contain AI-related keywords
   const aiKeywords = [
     'ai', 'artificial intelligence', 'machine learning', 'ml',
     'deep learning', 'neural network', 'chatgpt', 'gpt', 'claude',
@@ -28,47 +27,38 @@ const isAIRelated = (title: string, description: string): boolean => {
 const categorizeArticle = (title: string, description: string): string => {
   const text = `${title} ${description}`.toLowerCase()
 
-  // Financial AI
   if (/ai.*(finance|banking|fintech|payment|trading|investment|crypto)|finance.*ai|fintech.*ai/.test(text)) {
     return 'finance'
   }
   
-  // Education AI
   if (/ai.*(education|learning|student|course|university|teaching)|education.*ai|edtech.*ai/.test(text)) {
     return 'education'
   }
   
-  // Startup AI (funding, ventures)
   if (/startup|funding|venture|founder|seed round|series [a-z]|raised.*million|investment/.test(text)) {
     return 'startups'
   }
   
-  // AI Tools & Products (ChatGPT, Claude, new AI tools)
   if (/chatgpt|claude|gemini|copilot|midjourney|dall-e|stable diffusion|ai tool|ai product|ai platform|ai app|gpt-|released|launch.*ai/.test(text)) {
     return 'tools'
   }
   
-  // Policy & Regulation
   if (/regulation|policy|law|governance|ethics|legislation|government.*ai|ai.*act|ai safety/.test(text)) {
     return 'policy'
   }
   
-  // Medical & Healthcare AI
   if (/ai.*(medical|healthcare|health|diagnosis|drug|patient|hospital|doctor)|medical.*ai|health.*ai/.test(text)) {
     return 'medical'
   }
   
-  // Environment & Agriculture AI
   if (/ai.*(environment|climate|agriculture|farming|sustainability|green energy|carbon)|climate.*ai|agriculture.*ai/.test(text)) {
     return 'environment'
   }
   
-  // Media & Creative AI
   if (/ai.*(content|media|creative|video|image|art|music|generate)|content.*ai|creative.*ai/.test(text)) {
     return 'media'
   }
   
-  // Business AI
   if (/ai.*(business|enterprise|company|corporate)|business.*ai|enterprise.*ai/.test(text)) {
     return 'business'
   }
@@ -77,6 +67,12 @@ const categorizeArticle = (title: string, description: string): string => {
 }
 
 export async function fetchNews(): Promise<Article[]> {
+  // Skip fetching during build time
+  if (typeof window === 'undefined' && !process.env.NEWSAPI_KEY && !process.env.GUARDIAN_API_KEY) {
+    console.log('Skipping news fetch during build - no API keys configured')
+    return []
+  }
+
   const allArticles: Article[] = []
 
   // Fetch from NewsAPI
@@ -85,7 +81,12 @@ export async function fetchNews(): Promise<Article[]> {
     try {
       const response = await fetch(
         `https://newsapi.org/v2/everything?q=(artificial+intelligence+OR+AI+OR+machine+learning+OR+ChatGPT+OR+OpenAI+OR+LLM)&language=en&sortBy=publishedAt&pageSize=100&apiKey=${newsApiKey}`,
-        { next: { revalidate: 1800 } }
+        { 
+          next: { revalidate: 1800 },
+          headers: {
+            'User-Agent': 'AITianNews/1.0'
+          }
+        }
       )
 
       if (response.ok) {
@@ -94,7 +95,6 @@ export async function fetchNews(): Promise<Article[]> {
         if (data.articles) {
           const filteredArticles = data.articles
             .filter((item: any) => {
-              // Filter out non-AI news
               const title = item.title || ''
               const description = item.description || ''
               return isAIRelated(title, description)
@@ -124,7 +124,12 @@ export async function fetchNews(): Promise<Article[]> {
     try {
       const response = await fetch(
         `https://content.guardianapis.com/search?q=artificial+intelligence+OR+AI+OR+machine+learning&show-fields=thumbnail,trailText&page-size=50&api-key=${guardianKey}`,
-        { next: { revalidate: 1800 } }
+        { 
+          next: { revalidate: 1800 },
+          headers: {
+            'User-Agent': 'AITianNews/1.0'
+          }
+        }
       )
 
       if (response.ok) {
@@ -154,21 +159,6 @@ export async function fetchNews(): Promise<Article[]> {
     } catch (error) {
       console.error('Guardian API error:', error)
     }
-  }
-
-  if (allArticles.length === 0) {
-    return [
-      {
-        id: '1',
-        title: 'Add API Keys to See Real AI News',
-        description: 'Configure NEWSAPI_KEY or GUARDIAN_API_KEY in .env.local to fetch real-time AI news.',
-        url: 'https://newsapi.org',
-        image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
-        source: 'System',
-        category: 'general',
-        publishedAt: new Date().toISOString()
-      }
-    ]
   }
 
   // Remove duplicates
