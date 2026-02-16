@@ -88,3 +88,11 @@
     @apply bg-slate-100 border-slate-300 text-slate-900;
   }
 }
+
+.category-medical {
+  @apply bg-red-500/20 text-red-400 border border-red-500/30;
+}
+
+.category-environment {
+  @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+}
