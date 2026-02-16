@@ -1,37 +1,24 @@
 import Navbar from '@/components/Navbar'
 import NewsCard from '@/components/NewsCard'
 import { TrendingUp, Sparkles, ArrowRight } from 'lucide-react'
+import { fetchNews, getTrending, getByCategory } from '@/lib/news'
 
-async function getNews() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news`, {
-    next: { revalidate: 1800 } // 30 minutes
-  })
-  if (!res.ok) return { articles: [] }
-  return res.json()
-}
-
-async function getTrendingNews() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news?type=trending`, {
-    next: { revalidate: 1800 }
-  })
-  if (!res.ok) return { articles: [] }
-  return res.json()
-}
+// Mark as dynamic
+export const dynamic = 'force-dynamic'
+export const revalidate = 1800
 
 export default async function Home() {
-  const [{ articles }, { articles: trending }] = await Promise.all([
-    getNews(),
-    getTrendingNews()
-  ])
+  const allArticles = await fetchNews()
+  const trending = getTrending(allArticles, 6)
 
   const categories = [
-  { key: 'startups', name: 'AI Startups', icon: '🚀' },
-  { key: 'tools', name: 'Tools & Products', icon: '🛠️' },
-  { key: 'finance', name: 'AI in Finance', icon: '💰' },
-  { key: 'education', name: 'AI in Education', icon: '📚' },
-  { key: 'medical', name: 'AI in Medical', icon: '🏥' },
-  { key: 'environment', name: 'AI in Environment', icon: '🌱' },
-]
+    { key: 'startups', name: 'AI Startups', icon: '🚀' },
+    { key: 'tools', name: 'Tools & Products', icon: '🛠️' },
+    { key: 'finance', name: 'AI in Finance', icon: '💰' },
+    { key: 'education', name: 'AI in Education', icon: '📚' },
+    { key: 'medical', name: 'AI in Medical', icon: '🏥' },
+    { key: 'environment', name: 'AI in Environment', icon: '🌱' },
+  ]
 
   return (
     <>
@@ -83,7 +70,7 @@ export default async function Home() {
 
         {/* Categories */}
         {categories.map((cat) => {
-          const categoryArticles = articles.filter((a: any) => a.category === cat.key)
+          const categoryArticles = getByCategory(allArticles, cat.key)
           if (categoryArticles.length === 0) return null
 
           return (
