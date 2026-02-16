@@ -25,11 +25,13 @@ export default async function Home() {
   ])
 
   const categories = [
-    { key: 'startups', name: 'AI Startups', icon: '🚀' },
-    { key: 'tools', name: 'Tools & Products', icon: '🛠️' },
-    { key: 'finance', name: 'AI in Finance', icon: '💰' },
-    { key: 'education', name: 'AI in Education', icon: '📚' },
-  ]
+  { key: 'startups', name: 'AI Startups', icon: '🚀' },
+  { key: 'tools', name: 'Tools & Products', icon: '🛠️' },
+  { key: 'finance', name: 'AI in Finance', icon: '💰' },
+  { key: 'education', name: 'AI in Education', icon: '📚' },
+  { key: 'medical', name: 'AI in Medical', icon: '🏥' },
+  { key: 'environment', name: 'AI in Environment', icon: '🌱' },
+]
 
   return (
     <>
