@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { fetchNews, getTrending, getByCategory } from '@/lib/news'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 1800 // 30 minutes
+export const revalidate = 1800
 
 export async function GET(request: Request) {
   try {
@@ -23,6 +23,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ articles })
   } catch (error) {
     console.error('Error fetching news:', error)
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
+    return NextResponse.json({ articles: [] })
   }
 }
