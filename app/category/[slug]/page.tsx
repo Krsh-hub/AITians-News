@@ -1,0 +1,136 @@
+import Navbar from '@/components/Navbar'
+import NewsCard from '@/components/NewsCard'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+
+const categoryInfo: Record<string, { name: string; icon: string; description: string }> = {
+  finance: {
+    name: 'AI in Finance',
+    icon: '💰',
+    description: 'FinTech innovations, trading algorithms, and financial AI applications'
+  },
+  education: {
+    name: 'AI in Education',
+    icon: '📚',
+    description: 'EdTech, personalized learning, and AI-powered educational tools'
+  },
+  startups: {
+    name: 'AI Startups',
+    icon: '🚀',
+    description: 'Funding rounds, new ventures, and startup ecosystem news'
+  },
+  tools: {
+    name: 'AI Tools & Products',
+    icon: '🛠️',
+    description: 'New AI tools, product launches, and platform updates'
+  },
+  policy: {
+    name: 'Policy & Regulation',
+    icon: '⚖️',
+    description: 'AI governance, regulations, ethics, and policy developments'
+  },
+  media: {
+    name: 'AI in Media',
+    icon: '🎨',
+    description: 'Content generation, creative AI, and media applications'
+  },
+  business: {
+    name: 'AI in Business',
+    icon: '💼',
+    description: 'Enterprise AI, automation, and business applications'
+  },
+  medical: {
+    name: 'AI in Medical & Healthcare',
+    icon: '🏥',
+    description: 'Healthcare AI, medical diagnostics, drug discovery, and patient care'
+  },
+  environment: {
+    name: 'AI in Environment & Agriculture',
+    icon: '🌱',
+    description: 'Climate tech, sustainable agriculture, and environmental monitoring'
+  }
+}
+
+async function getCategoryNews(category: string) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/news?category=${category}`,
+    { next: { revalidate: 1800 } }
+  )
+  if (!res.ok) return { articles: [] }
+  return res.json()
+}
+
+export async function generateStaticParams() {
+  return Object.keys(categoryInfo).map((slug) => ({
+    slug,
+  }))
+}
+
+export default async function CategoryPage({ params }: { params: { slug: string } }) {
+  const { slug } = params
+  const category = categoryInfo[slug]
+  
+  if (!category) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen pt-32 px-4">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-4xl font-bold mb-4">Category Not Found</h1>
+            <Link href="/" className="text-blue-400 hover:text-blue-300">
+              ← Back to Home
+            </Link>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const { articles } = await getCategoryNews(slug)
+
+  return (
+    <>
+      <Navbar />
+      <main className="pt-24 pb-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <Link 
+            href="/" 
+            className="inline-flex items-center space-x-2 text-white/60 hover:text-white transition mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
+
+          <div className="flex items-center space-x-4 mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-4xl">
+              {category.icon}
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
+              <p className="text-white/60">{category.description}</p>
+            </div>
+          </div>
+
+          {/* Articles */}
+          {articles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {articles.map((article: any) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="text-white/60 text-lg mb-4">
+                No articles found in this category yet.
+              </p>
+              <Link href="/" className="text-blue-400 hover:text-blue-300">
+                Explore other categories →
+              </Link>
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  )
+}
